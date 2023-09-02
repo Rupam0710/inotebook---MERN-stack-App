@@ -17,10 +17,11 @@ router.post(
     body("password", "Password must be 5 characters").isLength({ min: 5 }),
   ],
   async (req, res) => {
+    let success = false;
     //if there are errors,return bad request and the errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ success, errors: errors.array() });
     }
 
     //check whether the user with this email exist already
@@ -29,7 +30,10 @@ router.post(
       if (user) {
         return res
           .status(400)
-          .json({ errors: "Sorry a user with this email already exists" });
+          .json({
+            success,
+            errors: "Sorry a user with this email already exists",
+          });
       }
 
       const salt = await bcrypt.genSalt(10);
@@ -48,8 +52,10 @@ router.post(
         },
       };
       const auth_token = jwt.sign(data, JWT_SECRET);
+      success = true;
+
       // console.log(auth_token);
-      res.json({ auth_token });
+      res.json({ success, auth_token });
     } catch (error) {
       console.error(error.message);
       res.status(500).send("Internal server error");
@@ -77,23 +83,19 @@ router.post(
       let user = await User.findOne({ email });
       if (!user) {
         success = false;
-        return res
-          .status(400)
-          .json({
-            success,
-            errors: "Please try to login with correct credentials",
-          });
+        return res.status(400).json({
+          success,
+          errors: "Please try to login with correct credentials",
+        });
       }
 
       const passwordCompare = await bcrypt.compare(password, user.password);
       if (!passwordCompare) {
         success = false;
-        return res
-          .status(400)
-          .json({
-            success,
-            errors: "Please try to login with correct credentials",
-          });
+        return res.status(400).json({
+          success,
+          errors: "Please try to login with correct credentials",
+        });
       }
 
       const data = {
