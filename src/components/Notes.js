@@ -1,22 +1,31 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import noteContext from "../context/notes/noteContext";
-import Noteitem from "./Noteitem";
 import AddNote from "./addNote";
+import Noteitem from "./Noteitem";
+import { useNavigate } from "react-router-dom";
 
 const Notes = (props) => {
+  // “useContext” hook is used to create common data that can be accessed throughout the component hierarchy without passing the props down manually to each level. Context defined will be available to all the child components without involving “props”.
   const context = useContext(noteContext);
+  let navigate = useNavigate();
   const { notes, getNotes, editNote } = context;
+
   useEffect(() => {
-    getNotes();
+    if (localStorage.getItem("token")) {
+      getNotes();
+    } else {
+      navigate("/login");
+    }
     // eslint-disable-next-line
   }, []);
+
   const ref = useRef(null);
   const refClose = useRef(null);
   const [note, setNote] = useState({
     id: "",
     etitle: "",
     edescription: "",
-    etag: "",
+    etag: "default",
   });
 
   const updateNote = (currentNote) => {
@@ -32,25 +41,31 @@ const Notes = (props) => {
   const handleClick = (e) => {
     editNote(note.id, note.etitle, note.edescription, note.etag);
     refClose.current.click();
-    props.showAlert("Updated Successfully", "success");
+    props.showAlert("Note Updated Successfully", "success");
   };
 
   const onChange = (e) => {
     setNote({ ...note, [e.target.name]: e.target.value });
   };
 
+  // In this, basically there are 3 segments
+  // In first segment, there is AddNote functionality where user can add a new note
+  // In second segment, there is edit note functionality which will open only when user clicks on edit button
+  // In third segment, I am showing all the notes of a user
   return (
-    <>
+    <div className="container">
       <AddNote showAlert={props.showAlert} />
       <button
-        ref={ref}
+        style={{ display: "none" }}
         type="button"
-        className="btn btn-primary d-none"
+        className="btn btn-primary"
+        ref={ref}
         data-bs-toggle="modal"
         data-bs-target="#exampleModal"
       >
-        Launch demo modal
+        Submit
       </button>
+
       <div
         className="modal fade"
         id="exampleModal"
@@ -72,17 +87,17 @@ const Notes = (props) => {
               ></button>
             </div>
             <div className="modal-body">
-              <form className="my-3">
+              <form className="mb-5 mt-4">
                 <div className="mb-3">
-                  <label htmlFor="title" className="form-label">
+                  <label htmlFor="etitle" className="form-label">
                     Title
                   </label>
                   <input
+                    value={note.etitle}
                     type="text"
                     className="form-control"
                     id="etitle"
                     name="etitle"
-                    value={note.etitle}
                     aria-describedby="emailHelp"
                     onChange={onChange}
                     minLength={5}
@@ -90,31 +105,32 @@ const Notes = (props) => {
                   />
                 </div>
                 <div className="mb-3">
-                  <label htmlFor="description" className="form-label">
+                  <label htmlFor="edescription" className="form-label">
                     Description
                   </label>
                   <input
                     type="text"
                     className="form-control"
                     id="edescription"
-                    name="edescription"
                     value={note.edescription}
+                    name="edescription"
                     onChange={onChange}
                     minLength={5}
                     required
                   />
                 </div>
                 <div className="mb-3">
-                  <label htmlFor="tag" className="form-label">
+                  <label htmlFor="etag" className="form-label">
                     Tag
                   </label>
                   <input
                     type="text"
                     className="form-control"
                     id="etag"
-                    name="etag"
                     value={note.etag}
+                    name="etag"
                     onChange={onChange}
+                    minLength={5}
                   />
                 </div>
               </form>
@@ -143,9 +159,9 @@ const Notes = (props) => {
         </div>
       </div>
 
-      <div className="row my-3">
-        <h2>You Notes</h2>
-        <div className="container mx-2">
+      <div className="row">
+        <h2 className="my-3 text-warning">Your Notes</h2>
+        <div className="container mx-1">
           {notes.length === 0 && "No notes to display"}
         </div>
         {notes.map((note) => {
@@ -159,7 +175,7 @@ const Notes = (props) => {
           );
         })}
       </div>
-    </>
+    </div>
   );
 };
 
